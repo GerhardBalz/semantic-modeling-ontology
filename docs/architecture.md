@@ -47,9 +47,22 @@ The Semantic Modeling Ontology describes semantic models.
 The Semantic Modeling Ontology is itself a semantic model.
 ```
 
-This provides reflection and self-description. It does not by itself provide a fully self-hosting modeling toolchain.
+This provides reflection and self-description: SMO uses its own concepts to state that it is a model, identify its model kind and modeling languages, and describe its elements and representations.
 
-A future toolchain may use SMO to generate documentation, validation logic, diagrams, schemas, editors, APIs, or agent contracts. When such generated tooling can process and regenerate SMO itself, the system would approach the self-hosting character of compiler-compilers such as Coco/R.
+For example:
+
+```turtle
+@prefix smo: <https://github.com/GerhardBalz/semantic-modeling-ontology#> .
+
+<https://github.com/GerhardBalz/semantic-modeling-ontology>
+    a smo:Model ;
+    smo:hasModelKind smo:OntologyModelKind ;
+    smo:usesLanguage smo:OWL, smo:SHACL .
+```
+
+The ontology defines what a `smo:Model` is and is itself described as one of those models. Because the self-description is model data, the same queries, validation rules, documentation generators, and other tools used for external semantic models can also be applied to SMO.
+
+This does not yet make SMO self-generating or self-hosting. Those are possible later stages in which SMO drives the generation of tooling that can process SMO itself.
 
 ## 4. Architectural context
 
