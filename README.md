@@ -21,7 +21,7 @@ The Semantic Modeling Ontology provides a small semantic foundation for describi
 ## Conceptual flow
 
 ```text
-Business Capability
+Capability
         ↓
 Capability Ontology
         ↓
