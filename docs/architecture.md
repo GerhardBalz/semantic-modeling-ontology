@@ -163,7 +163,7 @@ These kinds are initially represented as controlled concepts. The classification
 A primary use case is to describe a traceable chain from enduring meaning to operational artifacts.
 
 ```text
-Business Capability
+Capability
         ↓
 Capability Ontology
         ↓ projected as
@@ -175,6 +175,8 @@ API / UI / Rules / Data / Agent Contract
         ↓ activated in
 Runtime Context
 ```
+
+Here, **Capability** is intentionally broader than **Business Capability**. A capability may be a business, product, system, platform, organizational, or agent capability.
 
 An operational artifact is not identical to the ontology from which it was derived. It is a governed, purpose-specific projection or realization.
 
