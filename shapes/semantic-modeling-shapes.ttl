@@ -1,0 +1,70 @@
+@prefix smo: <https://github.com/GerhardBalz/semantic-modeling-ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+smo:ModelShape
+    a sh:NodeShape ;
+    sh:targetClass smo:Model ;
+    rdfs:label "Model shape"@en ;
+    sh:property [
+        sh:path dcterms:title ;
+        sh:minCount 1 ;
+        sh:message "A model must have a title."@en
+    ] ;
+    sh:property [
+        sh:path smo:hasModelKind ;
+        sh:minCount 1 ;
+        sh:class smo:ModelKind ;
+        sh:message "A model must have at least one model kind."@en
+    ] ;
+    sh:property [
+        sh:path smo:usesLanguage ;
+        sh:minCount 1 ;
+        sh:class smo:ModelingLanguage ;
+        sh:message "A model must declare at least one modeling language."@en
+    ] .
+
+smo:ModelElementShape
+    a sh:NodeShape ;
+    sh:targetClass smo:ModelElement ;
+    rdfs:label "Model element shape"@en ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:message "A model element must have a label."@en
+    ] .
+
+smo:ProjectionShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf smo:isProjectionOf ;
+    rdfs:label "Projection shape"@en ;
+    sh:property [
+        sh:path smo:isProjectionOf ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class smo:Model ;
+        sh:message "A projection must identify exactly one source model."@en
+    ] .
+
+smo:GeneratedArtifactShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf smo:isGeneratedFrom ;
+    rdfs:label "Generated artifact shape"@en ;
+    sh:property [
+        sh:path smo:isGeneratedFrom ;
+        sh:minCount 1 ;
+        sh:class smo:Model ;
+        sh:message "A generated artifact must identify at least one source model."@en
+    ] .
+
+smo:ModelRepresentationShape
+    a sh:NodeShape ;
+    sh:targetClass smo:ModelRepresentation ;
+    rdfs:label "Model representation shape"@en ;
+    sh:property [
+        sh:path dcterms:title ;
+        sh:minCount 1 ;
+        sh:message "A model representation must have a title."@en
+    ] .
