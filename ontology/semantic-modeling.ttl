@@ -1,0 +1,247 @@
+@prefix smo: <https://github.com/GerhardBalz/semantic-modeling-ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://github.com/GerhardBalz/semantic-modeling-ontology>
+    a owl:Ontology ;
+    dcterms:title "Semantic Modeling Ontology"@en ;
+    dcterms:description "An ontology for describing semantic models, their elements, constraints, mappings, projections, provenance, and operational artifacts."@en ;
+    dcterms:creator "Gerhard Balz" ;
+    dcterms:license <https://opensource.org/license/mit> ;
+    owl:versionInfo "0.1.0-SNAPSHOT" .
+
+# Core classes
+
+smo:Model
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Model"@en ;
+    rdfs:comment "A coherent representation created for a purpose."@en .
+
+smo:ModelElement
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Model element"@en ;
+    rdfs:comment "An identifiable element contained in or referenced by a model."@en .
+
+smo:ModelKind
+    a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Model kind"@en ;
+    rdfs:comment "A controlled concept classifying the role or purpose of a model."@en .
+
+smo:ModelingLanguage
+    a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Modeling language"@en ;
+    rdfs:comment "A language or formalism used to express a model or model representation."@en .
+
+smo:Artifact
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Artifact"@en ;
+    rdfs:comment "A concrete deliverable related to a model."@en .
+
+smo:ModelRepresentation
+    a owl:Class ;
+    rdfs:subClassOf smo:Artifact ;
+    rdfs:label "Model representation"@en ;
+    rdfs:comment "A concrete serialization, document, diagram, or other representation of a model."@en .
+
+smo:SemanticView
+    a owl:Class ;
+    rdfs:subClassOf smo:Model ;
+    rdfs:label "Semantic view"@en ;
+    rdfs:comment "A purpose-, audience-, or context-specific view of another model."@en .
+
+smo:Constraint
+    a owl:Class ;
+    rdfs:subClassOf smo:ModelElement ;
+    rdfs:label "Constraint"@en ;
+    rdfs:comment "A condition that a model, model element, or artifact is expected to satisfy."@en .
+
+smo:Mapping
+    a owl:Class ;
+    rdfs:subClassOf smo:ModelElement ;
+    rdfs:label "Mapping"@en ;
+    rdfs:comment "A declared correspondence between model elements, models, or representations."@en .
+
+smo:Transformation
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Transformation"@en ;
+    rdfs:comment "An activity that derives a model or artifact from one or more source entities."@en .
+
+smo:RuntimeContext
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Runtime context"@en ;
+    rdfs:comment "The circumstances in which a model, view, artifact, policy, or tool applies."@en .
+
+smo:AgentContract
+    a owl:Class ;
+    rdfs:subClassOf smo:Model, smo:Artifact ;
+    rdfs:label "Agent contract"@en ;
+    rdfs:comment "A task-oriented operational semantic contract exposed to an AI agent."@en .
+
+# Core object properties
+
+smo:containsElement
+    a owl:ObjectProperty ;
+    owl:inverseOf smo:isElementOf ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:ModelElement ;
+    rdfs:label "contains element"@en ;
+    rdfs:comment "Relates a model to an element it contains or defines."@en .
+
+smo:isElementOf
+    a owl:ObjectProperty ;
+    rdfs:domain smo:ModelElement ;
+    rdfs:range smo:Model ;
+    rdfs:label "is element of"@en .
+
+smo:hasModelKind
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:ModelKind ;
+    rdfs:label "has model kind"@en .
+
+smo:usesLanguage
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:ModelingLanguage ;
+    rdfs:label "uses language"@en .
+
+smo:hasRepresentation
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:ModelRepresentation ;
+    rdfs:label "has representation"@en .
+
+smo:importsModel
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Model ;
+    rdfs:label "imports model"@en ;
+    rdfs:comment "Relates a model to another model whose definitions it imports or reuses."@en .
+
+smo:isDerivedFrom
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain prov:Entity ;
+    rdfs:range prov:Entity ;
+    rdfs:label "is derived from"@en .
+
+smo:isProjectionOf
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf smo:isDerivedFrom ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Model ;
+    rdfs:label "is projection of"@en ;
+    rdfs:comment "Relates a purpose-specific model to the source model whose semantics it selects or reshapes."@en .
+
+smo:specializes
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf smo:isDerivedFrom ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Model ;
+    rdfs:label "specializes"@en ;
+    rdfs:comment "Relates a model to a more general model whose semantics it refines."@en .
+
+smo:realizes
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf smo:isDerivedFrom ;
+    rdfs:domain prov:Entity ;
+    rdfs:range smo:Model ;
+    rdfs:label "realizes"@en ;
+    rdfs:comment "Relates an entity to a model that it implements or operationally represents."@en .
+
+smo:hasConstraint
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Constraint ;
+    rdfs:label "has constraint"@en .
+
+smo:hasMapping
+    a owl:ObjectProperty ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Mapping ;
+    rdfs:label "has mapping"@en .
+
+smo:generatesArtifact
+    a owl:ObjectProperty ;
+    owl:inverseOf smo:isGeneratedFrom ;
+    rdfs:domain smo:Model ;
+    rdfs:range smo:Artifact ;
+    rdfs:label "generates artifact"@en .
+
+smo:isGeneratedFrom
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf smo:isDerivedFrom ;
+    rdfs:domain smo:Artifact ;
+    rdfs:range smo:Model ;
+    rdfs:label "is generated from"@en .
+
+smo:appliesInContext
+    a owl:ObjectProperty ;
+    rdfs:domain prov:Entity ;
+    rdfs:range smo:RuntimeContext ;
+    rdfs:label "applies in context"@en .
+
+# Initial model kinds
+
+smo:OntologyModelKind
+    a owl:NamedIndividual, smo:ModelKind ;
+    skos:prefLabel "Ontology model"@en ;
+    skos:definition "A model that formally defines the meaning of concepts and relationships."@en .
+
+smo:SemanticModelKind
+    a owl:NamedIndividual, smo:ModelKind ;
+    skos:prefLabel "Semantic model"@en ;
+    skos:definition "A canonical semantic representation intended for use by people and systems."@en .
+
+smo:DomainModelKind
+    a owl:NamedIndividual, smo:ModelKind ;
+    skos:prefLabel "Domain model"@en ;
+    skos:definition "A model representing a domain or bounded context for a particular purpose."@en .
+
+smo:ConstraintModelKind
+    a owl:NamedIndividual, smo:ModelKind ;
+    skos:prefLabel "Constraint model"@en ;
+    skos:definition "A model defining structural or semantic validity conditions."@en .
+
+smo:AgentContractModelKind
+    a owl:NamedIndividual, smo:ModelKind ;
+    skos:prefLabel "Agent contract model"@en ;
+    skos:definition "A task-oriented operational model exposed to an AI agent."@en .
+
+# Initial modeling languages
+
+smo:RDF
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "RDF"@en .
+
+smo:RDFS
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "RDFS"@en .
+
+smo:OWL
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "OWL"@en .
+
+smo:SHACL
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "SHACL"@en .
+
+smo:SKOS
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "SKOS"@en .
+
+smo:SPARQL
+    a owl:NamedIndividual, smo:ModelingLanguage ;
+    skos:prefLabel "SPARQL"@en .
