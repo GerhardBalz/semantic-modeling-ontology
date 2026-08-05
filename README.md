@@ -41,6 +41,7 @@ The ontology describes the relationships between these artifacts without attempt
 ```text
 .
 ├── README.md
+├── CONTRIBUTING.md
 ├── LICENSE
 ├── docs/
 │   └── architecture.md
@@ -55,6 +56,10 @@ The ontology describes the relationships between these artifacts without attempt
 ## Architecture
 
 The design rationale, scope, competency questions, core concepts, and open questions are maintained in [`docs/architecture.md`](docs/architecture.md).
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repository workflow and contribution guidelines.
 
 ## Initial milestone
 
