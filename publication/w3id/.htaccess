@@ -1,0 +1,9 @@
+# PRE-ACTIVATION payload for https://w3id.org/smo
+# Do not submit or activate until the repository baseline is reviewed and the immutable release tag exists.
+RewriteEngine On
+
+# Immutable v0.1.0 ontology document. The backend becomes valid after tag smo-v0.1.0 is created.
+RewriteRule ^0\.1\.0/?$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl [R=302,L]
+
+# Current ontology document.
+RewriteRule ^$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl [R=302,L]
