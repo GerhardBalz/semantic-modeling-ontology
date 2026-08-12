@@ -7,7 +7,7 @@ on:
       - ".github/workflows/verify-prepared-live-w3id.yml"
   push:
     branches:
-      - agent/harden-live-w3id-verifier
+      - agent/handle-w3id-canonicalization
     paths:
       - "publication/verify-live-w3id.py"
       - ".github/workflows/verify-prepared-live-w3id.yml"
@@ -34,7 +34,7 @@ jobs:
       - name: Compile live verifier
         run: python -m py_compile publication/verify-live-w3id.py
 
-      - name: Exercise redirect, backend, and retry contracts without network access
+      - name: Exercise canonicalization, backend, and retry contracts without network access
         shell: bash
         run: |
           python - <<'PY'
@@ -57,16 +57,20 @@ jobs:
           <https://w3id.org/smo#ImplementationProjection> a owl:Class .
           '''
 
-          def good_redirect(url: str, accept: str):
-              if url == module.BASE and accept.startswith("text/html"):
+          def good_redirect_once(url: str, accept: str):
+              if url == module.BASE:
+                  return 301, module.BASE + "/"
+              if url == module.BASE + "/" and accept.startswith("text/html"):
                   return 303, module.CURRENT_HTML
-              if url == module.BASE and accept == "text/turtle":
+              if url == module.BASE + "/" and accept == "text/turtle":
                   return 303, module.CURRENT_RAW
               if url == module.DIST and accept == "text/turtle":
                   return 303, module.CURRENT_RAW
-              if url == module.VERSION and accept.startswith("text/html"):
+              if url == module.VERSION:
+                  return 301, module.VERSION + "/"
+              if url == module.VERSION + "/" and accept.startswith("text/html"):
                   return 303, module.VERSION_HTML
-              if url == module.VERSION and accept == "text/turtle":
+              if url == module.VERSION + "/" and accept == "text/turtle":
                   return 303, module.VERSION_RAW
               if url == module.VERSION_DIST and accept == "text/turtle":
                   return 303, module.VERSION_RAW
@@ -77,17 +81,17 @@ jobs:
               assert url in {module.CURRENT_RAW, module.VERSION_RAW}
               return good_turtle, "text/turtle"
 
-          module.redirect_target = good_redirect
+          module.redirect_once = good_redirect_once
           module.fetch_target = good_fetch
           assert module.main() == 0
 
-          def mutable_version_redirect(url: str, accept: str):
-              status, target = good_redirect(url, accept)
-              if url == module.VERSION and accept == "text/turtle":
+          def mutable_version_redirect_once(url: str, accept: str):
+              status, target = good_redirect_once(url, accept)
+              if url == module.VERSION + "/" and accept == "text/turtle":
                   return status, module.CURRENT_RAW
               return status, target
 
-          module.redirect_target = mutable_version_redirect
+          module.redirect_once = mutable_version_redirect_once
           try:
               module.main()
           except AssertionError as exc:
@@ -109,7 +113,7 @@ jobs:
                   return bad_turtle, "text/turtle"
               return good_turtle, "text/turtle"
 
-          module.redirect_target = good_redirect
+          module.redirect_once = good_redirect_once
           module.fetch_target = missing_term_fetch
           try:
               module.main()
@@ -132,5 +136,5 @@ jobs:
           assert attempts["count"] == 3
           module.time.sleep = original_sleep
 
-          print("SUCCESS: hardened verifier proves W3ID redirect targets, immutable tag routing, RDF identity, negative controls, and bounded retry behavior without network access.")
+          print("SUCCESS: verifier follows internal W3ID canonicalization only, validates terminal 303 targets, immutable RDF identity, negative controls, and bounded retries without network access.")
           PY
