@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the SMO v0.1 ontology and staged pre-activation publication contract."""
+"""Verify the SMO v0.1 ontology and activation-requested publication contract."""
 from __future__ import annotations
 
 import json
@@ -19,6 +19,7 @@ EXPECTED_NAMESPACE = "https://w3id.org/smo#"
 EXPECTED_ONTOLOGY_IRI = "https://w3id.org/smo"
 EXPECTED_VERSION_IRI = "https://w3id.org/smo/0.1.0"
 EXPECTED_VERSION = "0.1.0"
+EXPECTED_W3ID_PR = "https://github.com/perma-id/w3id.org/pull/6538"
 EXPECTED_CLASSES = {"SemanticModel", "ImplementationProjection"}
 EXPECTED_DEFINITIONS = {
     "SemanticModel": "A formal representation that gives knowledge explicit machine-interpretable meaning through concepts, relationships, constraints, axioms, or equivalent semantic structures.",
@@ -53,10 +54,10 @@ def main() -> None:
     graph.parse(ROOT / contract["ontology"]["path"], format="turtle")
 
     require(contract["contractVersion"] == "1.0", "unexpected publication contract version")
-    require(contract["status"] == "pre-activation", "SMO must remain pre-activation until live W3ID verification")
+    require(contract["status"] == "activation-requested", "SMO must record the submitted-but-not-active state")
     require(contract["repository"] == "GerhardBalz/semantic-modeling-ontology", "repository mismatch")
     require(contract["termNamespace"]["current"] == EXPECTED_NAMESPACE, "term namespace mismatch")
-    require(contract["termNamespace"]["activationStatus"] == "not-active", "namespace must not yet claim activation")
+    require(contract["termNamespace"]["activationStatus"] == "request-pending", "namespace request must remain pending until live verification")
     require(contract["termNamespace"]["resolver"] == EXPECTED_ONTOLOGY_IRI, "resolver mismatch")
 
     ontology_iri = URIRef(EXPECTED_ONTOLOGY_IRI)
@@ -74,71 +75,106 @@ def main() -> None:
                 owned_uris.add(value)
     owned_locals = {local_name(uri) for uri in owned_uris}
     require(owned_locals == EXPECTED_CLASSES, f"unexpected SMO-owned terms: {sorted(owned_locals)}")
-    declared_classes = {local_name(s) for s in graph.subjects(RDF.type, OWL.Class) if isinstance(s, URIRef) and str(s).startswith(EXPECTED_NAMESPACE)}
+
+    declared_classes = {
+        local_name(subject)
+        for subject in graph.subjects(RDF.type, OWL.Class)
+        if isinstance(subject, URIRef) and str(subject).startswith(EXPECTED_NAMESPACE)
+    }
     require(declared_classes == EXPECTED_CLASSES, f"expected exactly two SMO classes, found {sorted(declared_classes)}")
     require(contract["ownedTerms"]["classes"] == ["SemanticModel", "ImplementationProjection"], "class inventory changed")
     require(contract["ownedTerms"]["objectProperties"] == [], "v0.1 must not own object properties")
     require(contract["ownedTerms"]["datatypeProperties"] == [], "v0.1 must not own datatype properties")
 
     for property_type in (OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty):
-        owned = [s for s in graph.subjects(RDF.type, property_type) if isinstance(s, URIRef) and str(s).startswith(EXPECTED_NAMESPACE)]
+        owned = [
+            subject
+            for subject in graph.subjects(RDF.type, property_type)
+            if isinstance(subject, URIRef) and str(subject).startswith(EXPECTED_NAMESPACE)
+        ]
         require(not owned, f"v0.1 must not mint SMO properties: {owned}")
 
     for name, expected_definition in EXPECTED_DEFINITIONS.items():
         term = URIRef(EXPECTED_NAMESPACE + name)
-        require(list(graph.objects(term, RDFS.comment)) == [Literal(expected_definition, lang="en")], f"{name}: definition mismatch")
+        require(
+            list(graph.objects(term, RDFS.comment)) == [Literal(expected_definition, lang="en")],
+            f"{name}: definition mismatch",
+        )
         labels = list(graph.objects(term, RDFS.label))
-        require(len(labels) == 1 and isinstance(labels[0], Literal) and labels[0].language == "en", f"{name}: English label required")
+        require(
+            len(labels) == 1 and isinstance(labels[0], Literal) and labels[0].language == "en",
+            f"{name}: English label required",
+        )
 
     for name in owned_locals:
-        require(not any(fragment in name.lower() for fragment in FORBIDDEN_ESKA_FRAGMENTS), f"ESKA-specific concept leaked into SMO: {name}")
+        require(
+            not any(fragment in name.lower() for fragment in FORBIDDEN_ESKA_FRAGMENTS),
+            f"ESKA-specific concept leaked into SMO: {name}",
+        )
 
-    github_semantic_uris = {str(value) for triple in graph for value in triple if isinstance(value, URIRef) and str(value).startswith(GITHUB_IDENTITY_PREFIX)}
+    github_semantic_uris = {
+        str(value)
+        for triple in graph
+        for value in triple
+        if isinstance(value, URIRef) and str(value).startswith(GITHUB_IDENTITY_PREFIX)
+    }
     require(not github_semantic_uris, f"GitHub URL used as semantic identity: {sorted(github_semantic_uris)}")
 
+    publication = contract["publication"]
+    require(publication["w3idRequested"] is True, "submitted W3ID request must be recorded")
+    require(publication["w3idPullRequest"] == EXPECTED_W3ID_PR, "W3ID PR reference mismatch")
+    require(publication["w3idActive"] is False, "repository must not claim activation before external verification")
+    require(contract["releaseVersioning"]["releaseCreated"] is False, "repository must not claim release/tag before it exists")
+
     require(backends["contractVersion"] == contract["contractVersion"], "backend contract version mismatch")
-    require(backends["status"] == "pre-activation", "backend targets must remain pre-activation")
+    require(backends["status"] == "activation-requested", "backend targets must reflect activation-requested state")
     require(backends["repository"] == contract["repository"], "backend repository mismatch")
     require(backends["branch"] == "main", "current publication backend must target main")
     routes = {entry["kind"]: entry for entry in backends["routes"]}
-    require(set(routes) == {"current", "version"}, "expected planned current and version backend metadata")
+    require(set(routes) == {"current", "version"}, "expected current and version backend metadata")
     require(routes["current"]["route"] == EXPECTED_ONTOLOGY_IRI, "current W3ID route mismatch")
     require(routes["current"]["target"] == CURRENT_RAW, "current backend mismatch")
+    require(routes["current"].get("activationRequest") == EXPECTED_W3ID_PR, "current route missing activation request")
     require(routes["version"]["route"] == EXPECTED_VERSION_IRI, "planned version IRI mismatch")
     require(routes["version"]["target"] == VERSION_RAW, "planned immutable backend mismatch")
     require(routes["version"].get("requiresTag") == "smo-v0.1.0", "immutable target must require smo-v0.1.0")
     for entry in routes.values():
-        require(entry["active"] is False, f"prepared route must not claim activation: {entry['route']}")
+        require(entry["active"] is False, f"route must not claim activation prematurely: {entry['route']}")
         require(entry["target"].startswith(RAW_BACKEND_PREFIX), f"backend outside governed repository: {entry['target']}")
 
-    require(contract["publication"]["w3idRequested"] is False, "repository must not claim request before upstream submission")
-    require(contract["publication"]["w3idActive"] is False, "repository must not claim activation")
-    require(contract["releaseVersioning"]["releaseCreated"] is False, "repository must not claim release/tag")
-
     htaccess = W3ID_PATH.read_text(encoding="utf-8")
-    require("PRE-ACTIVATION" in htaccess, "W3ID payload must be visibly pre-activation")
+    require("PRE-ACTIVATION" in htaccess, "submitted W3ID payload must retain its pre-live-state marker")
     require(CURRENT_RAW in htaccess, "W3ID activation payload missing current Turtle backend")
-    require(VERSION_RAW not in htaccess, "immutable version redirect must not be submitted before smo-v0.1.0 exists")
+    require(VERSION_RAW not in htaccess, "immutable version redirect must not be present before smo-v0.1.0 exists")
     require("text/turtle" in htaccess and "R=303" in htaccess, "activation payload must support Turtle negotiation with 303 redirects")
-    require("https://github.com/GerhardBalz/semantic-modeling-ontology" in htaccess, "activation payload missing human project route")
+    require(GITHUB_IDENTITY_PREFIX in htaccess, "activation payload missing human project route")
 
     w3id_readme = W3ID_README_PATH.read_text(encoding="utf-8")
     for token in ("@GerhardBalz", EXPECTED_ONTOLOGY_IRI, EXPECTED_NAMESPACE, "smo-v0.1.0", "no immutable version redirect"):
         require(token in w3id_readme, f"W3ID README missing governance token: {token}")
 
-    required_tokens = (EXPECTED_NAMESPACE, EXPECTED_ONTOLOGY_IRI, EXPECTED_VERSION_IRI, EXPECTED_VERSION, "pre-activation", "smo-v0.1.0")
+    required_tokens = (
+        EXPECTED_NAMESPACE,
+        EXPECTED_ONTOLOGY_IRI,
+        EXPECTED_VERSION_IRI,
+        EXPECTED_VERSION,
+        "activation-requested",
+        "6538",
+        "smo-v0.1.0",
+    )
     for path in (README_PATH, DOC_PATH):
         text = path.read_text(encoding="utf-8")
         for token in required_tokens:
             require(token in text, f"{path.relative_to(ROOT)} missing publication-contract token: {token}")
 
-    print("SUCCESS: SMO v0.1 ontology and staged W3ID activation payload are machine-verifiable.")
+    print("SUCCESS: SMO v0.1 ontology and activation-requested publication state are machine-verifiable.")
     print(f"Term namespace:       {EXPECTED_NAMESPACE}")
     print(f"Ontology IRI:         {EXPECTED_ONTOLOGY_IRI}")
     print(f"Version IRI:          {EXPECTED_VERSION_IRI}")
     print(f"Declared classes:     {len(declared_classes)}")
     print("SMO-owned properties: 0")
-    print("W3ID activation:      current routes only; version route deferred")
+    print("W3ID request:         submitted as perma-id/w3id.org#6538; not yet active")
+    print("Immutable route:      deferred until smo-v0.1.0 exists")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
 {
   "contractVersion": "1.0",
-  "status": "pre-activation",
+  "status": "activation-requested",
   "repository": "GerhardBalz/semantic-modeling-ontology",
   "termNamespace": {
     "current": "https://w3id.org/smo#",
-    "activationStatus": "not-active",
+    "activationStatus": "request-pending",
     "resolver": "https://w3id.org/smo"
   },
   "ontology": {
@@ -25,7 +25,8 @@
     "backendTargets": "publication/backend-targets.json",
     "w3idPayload": "publication/w3id/.htaccess",
     "namespaceDocumentation": "docs/namespace-publication-versioning.md",
-    "w3idRequested": false,
+    "w3idRequested": true,
+    "w3idPullRequest": "https://github.com/perma-id/w3id.org/pull/6538",
     "w3idActive": false
   },
   "releaseVersioning": {
