@@ -1,0 +1,89 @@
+name: Verify prepared live SMO W3ID verifier
+
+on:
+  pull_request:
+    paths:
+      - "publication/verify-live-w3id.py"
+      - ".github/workflows/verify-prepared-live-w3id.yml"
+  push:
+    branches:
+      - agent/prepare-live-w3id-verification
+    paths:
+      - "publication/verify-live-w3id.py"
+      - ".github/workflows/verify-prepared-live-w3id.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install verifier dependency
+        run: python -m pip install rdflib
+
+      - name: Compile live verifier
+        run: python -m py_compile publication/verify-live-w3id.py
+
+      - name: Exercise live-verifier contract without network access
+        shell: bash
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path("publication/verify-live-w3id.py")
+          spec = importlib.util.spec_from_file_location("smo_live_verifier", path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+
+          good_turtle = b'''@prefix owl: <http://www.w3.org/2002/07/owl#> .
+          <https://w3id.org/smo#SemanticModel> a owl:Class .
+          <https://w3id.org/smo#ImplementationProjection> a owl:Class .
+          '''
+
+          def good_request(url: str, accept: str):
+              if url == module.BASE and accept.startswith("text/html"):
+                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
+              if url == module.BASE and accept == "text/turtle":
+                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", good_turtle, "text/turtle"
+              if url == module.DIST and accept == "text/turtle":
+                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", good_turtle, "text/turtle"
+              raise AssertionError((url, accept))
+
+          module.request = good_request
+          assert module.main() == 0
+
+          bad_turtle = b'''@prefix owl: <http://www.w3.org/2002/07/owl#> .
+          <https://w3id.org/smo#SemanticModel> a owl:Class .
+          '''
+
+          def bad_request(url: str, accept: str):
+              if url == module.BASE and accept.startswith("text/html"):
+                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
+              if url == module.BASE and accept == "text/turtle":
+                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", bad_turtle, "text/turtle"
+              if url == module.DIST and accept == "text/turtle":
+                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", bad_turtle, "text/turtle"
+              raise AssertionError((url, accept))
+
+          module.request = bad_request
+          try:
+              module.main()
+          except AssertionError as exc:
+              assert "ImplementationProjection missing" in str(exc)
+          else:
+              raise AssertionError("negative control unexpectedly passed")
+
+          print("SUCCESS: prepared live W3ID verifier passes its offline contract and rejects missing vocabulary evidence.")
+          PY
