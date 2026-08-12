@@ -2,7 +2,7 @@
 
 ## Status
 
-The SMO current publication state is **current-active**.
+The SMO publication state is **release-published**.
 
 The current W3ID namespace was activated through `perma-id/w3id.org` PR #6538, merged as upstream commit:
 
@@ -16,9 +16,16 @@ Live resolver verification then succeeded in GitHub Actions run:
 https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287
 ```
 
-That run verified HTML resolution, Turtle content negotiation, the explicit Turtle distribution route, and the presence of `smo:SemanticModel` and `smo:ImplementationProjection` in live RDF.
+The first governed immutable repository release now exists:
 
-No `smo-v0.1.0` release/tag exists yet, and no immutable `0.1.0` W3ID route is active.
+```text
+release tag      smo-v0.1.0
+release commit   e6ab3f8cf14bafae466a0150ad356547f164bdab
+publisher run    https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31633781524
+release          https://github.com/GerhardBalz/semantic-modeling-ontology/releases/tag/smo-v0.1.0
+```
+
+The tagged `model/smo.ttl` backend is fetchable under `smo-v0.1.0`. The immutable `https://w3id.org/smo/0.1.0` route is not active yet.
 
 ## Semantic identity
 
@@ -69,9 +76,9 @@ pre-activation
     ↓ upstream W3ID request submitted
 activation-requested
     ↓ upstream merge + external HTML/Turtle verification
-current-active              ← current state
+current-active
     ↓ create governed smo-v0.1.0 release
-release-published
+release-published            ← current state
     ↓ submit + merge immutable version route
 version-active
 ```
@@ -89,24 +96,28 @@ W3ID PR #6538 activates current routes only:
 
 It deliberately contains no `0.1.0` version route.
 
-## Prepared backend targets
+## Governed immutable backend
 
-`publication/backend-targets.json` records both the active current target and the planned immutable target.
-
-The planned immutable route targets:
+The governed immutable release backend now exists at:
 
 ```text
 https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl
 ```
 
-and therefore cannot become active before `smo-v0.1.0` exists.
+The tag `smo-v0.1.0` points exactly to:
+
+```text
+e6ab3f8cf14bafae466a0150ad356547f164bdab
+```
+
+`publication/backend-targets.json` records that backend as release-backed and verified, while keeping the W3ID version route inactive until the separate upstream activation is complete.
 
 ## Next governed transitions
 
-1. publish the governed `smo-v0.1.0` release/tag from the active current baseline;
-2. verify the immutable backend publicly;
-3. submit immutable W3ID routes for `https://w3id.org/smo/0.1.0`;
-4. verify current and immutable routes together;
+1. prepare the immutable W3ID route payload under SMO #10;
+2. submit an upstream W3ID change for `https://w3id.org/smo/0.1.0` targeting only `smo-v0.1.0`;
+3. after upstream merge, verify current and immutable routes together;
+4. advance the machine state to `version-active` only after that external verification succeeds;
 5. only then execute downstream SMO #11 alignment in ESKA and Pizza.
 
 ## Versioning
@@ -119,7 +130,7 @@ The repository tag pattern is:
 smo-v{version}
 ```
 
-The initial immutable tag will therefore be:
+The first governed immutable tag is:
 
 ```text
 smo-v0.1.0
@@ -144,12 +155,14 @@ Compatibility guidance for later versions:
 7. no GitHub repository URL becomes semantic identity;
 8. W3ID PR #6538 and its merge commit are recorded;
 9. current publication is marked active only with successful live-verification evidence;
-10. the immutable route remains inactive before `smo-v0.1.0` exists;
-11. this documentation and the README state the same current-active contract.
+10. `smo-v0.1.0` and its exact governed release commit are recorded;
+11. the immutable tagged backend is recorded as verified;
+12. the immutable W3ID route remains inactive until its separate upstream activation succeeds;
+13. this documentation and the README state the same `release-published` contract.
 
 ## Downstream gate
 
-SMO #11 deliberately remains blocked while immutable publication is incomplete.
+SMO #11 deliberately remains blocked while immutable W3ID publication is incomplete.
 
 Do not yet:
 
@@ -158,4 +171,4 @@ Do not yet:
 - mark `eska:SemanticModel` deprecated;
 - change immutable `eska-v0.1.0`.
 
-Current + immutable publication evidence is the gate that makes downstream cross-repository references durable rather than provisional.
+Current + immutable W3ID publication evidence is the gate that makes downstream cross-repository references durable rather than provisional.
