@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0",
-  "status": "current-active",
+  "status": "release-published",
   "repository": "GerhardBalz/semantic-modeling-ontology",
   "termNamespace": {
     "current": "https://w3id.org/smo#",
@@ -34,7 +34,13 @@
   "releaseVersioning": {
     "repositoryTagPattern": "smo-v{version}",
     "initialRepositoryVersion": "0.1.0",
-    "releaseCreated": false,
+    "releaseCreated": true,
+    "releaseTag": "smo-v0.1.0",
+    "releaseCommit": "e6ab3f8cf14bafae466a0150ad356547f164bdab",
+    "releaseUrl": "https://github.com/GerhardBalz/semantic-modeling-ontology/releases/tag/smo-v0.1.0",
+    "releaseWorkflowRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31633781524",
+    "immutableBackend": "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl",
+    "immutableBackendVerified": true,
     "termIrisUnversioned": true
   }
 }
