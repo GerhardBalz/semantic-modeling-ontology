@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0",
-  "status": "activation-requested",
+  "status": "current-active",
   "repository": "GerhardBalz/semantic-modeling-ontology",
   "branch": "main",
   "routes": [
@@ -8,8 +8,10 @@
       "route": "https://w3id.org/smo",
       "kind": "current",
       "target": "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl",
-      "active": false,
-      "activationRequest": "https://github.com/perma-id/w3id.org/pull/6538"
+      "active": true,
+      "activationRequest": "https://github.com/perma-id/w3id.org/pull/6538",
+      "activationMergeCommit": "42367a77c52b60dab4cdf55327fca023e78a61a4",
+      "liveVerificationRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287"
     },
     {
       "route": "https://w3id.org/smo/0.1.0",
@@ -20,7 +22,7 @@
     }
   ],
   "notes": [
-    "The current W3ID namespace activation request is submitted as perma-id/w3id.org PR #6538 but is not yet merged or claimed active.",
+    "The current SMO W3ID route is active and was verified by GitHub Actions after perma-id/w3id.org PR #6538 merged.",
     "The immutable 0.1.0 route remains deferred until the smo-v0.1.0 release exists.",
     "GitHub URLs are publication backends, never SMO semantic identifiers."
   ]
