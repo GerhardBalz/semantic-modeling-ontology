@@ -1,0 +1,29 @@
+{
+  "release": "smo-v0.1.0",
+  "repositoryVersion": "0.1.0",
+  "status": "governed-release",
+  "termNamespace": "https://w3id.org/smo#",
+  "ontologyIri": "https://w3id.org/smo",
+  "ontologyVersionIri": "https://w3id.org/smo/0.1.0",
+  "sourceBranch": "main",
+  "releaseTag": "smo-v0.1.0",
+  "ownedTerms": {
+    "classes": [
+      "SemanticModel",
+      "ImplementationProjection"
+    ],
+    "objectProperties": [],
+    "datatypeProperties": []
+  },
+  "bundle": [
+    "model/smo.ttl",
+    "model/publication-contract.json",
+    "publication/backend-targets.json",
+    "docs/namespace-publication-versioning.md"
+  ],
+  "prerequisites": {
+    "currentW3idActive": true,
+    "liveResolverVerified": true
+  },
+  "notes": "The release tag identifies the immutable governed repository snapshot for SMO v0.1.0. Immutable W3ID version routes are activated only after this release exists and its public backend is verified."
+}

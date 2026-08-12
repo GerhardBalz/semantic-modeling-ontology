@@ -1,0 +1,93 @@
+name: Publish SMO v0.1.0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - publication/releases/smo-v0.1.0.json
+      - docs/releases/smo-v0.1.0.md
+      - .github/workflows/publish-smo-v0.1.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify governed release inputs and activation gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('publication/releases/smo-v0.1.0.json').read_text(encoding='utf-8'))
+          contract = json.loads(Path('model/publication-contract.json').read_text(encoding='utf-8'))
+
+          assert manifest['release'] == 'smo-v0.1.0'
+          assert manifest['repositoryVersion'] == '0.1.0'
+          assert manifest['termNamespace'] == 'https://w3id.org/smo#'
+          assert manifest['ontologyIri'] == 'https://w3id.org/smo'
+          assert manifest['ontologyVersionIri'] == 'https://w3id.org/smo/0.1.0'
+          assert manifest['ownedTerms'] == {
+              'classes': ['SemanticModel', 'ImplementationProjection'],
+              'objectProperties': [],
+              'datatypeProperties': [],
+          }
+
+          assert contract['status'] == 'current-active', 'SMO current publication contract is not active'
+          assert contract['termNamespace']['activationStatus'] == 'active'
+          assert contract['publication']['w3idRequested'] is True
+          assert contract['publication']['w3idActive'] is True
+          assert contract['publication']['w3idMergeCommit'] == '42367a77c52b60dab4cdf55327fca023e78a61a4'
+          assert contract['publication']['liveVerificationRun'] == 'https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287'
+          assert contract['ontology']['version'] == '0.1.0'
+          assert contract['ownedTerms'] == manifest['ownedTerms']
+          assert contract['releaseVersioning']['releaseCreated'] is False
+
+          for path in manifest['bundle']:
+              assert Path(path).is_file(), path
+
+          assert Path('publication/verify-live-w3id.py').is_file(), 'live W3ID verifier missing'
+          print('SUCCESS: SMO v0.1.0 release inputs and current-active gate are valid.')
+          PY
+
+      - name: Verify live current W3ID resolver
+        run: python publication/verify-live-w3id.py
+
+      - name: Create immutable tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: smo-v0.1.0
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            tag_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq '.object.sha')"
+            if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+              echo "Existing $TAG points to $tag_sha, expected $GITHUB_SHA" >&2
+              exit 1
+            fi
+            echo "$TAG already exists at the governed release commit; leaving it unchanged."
+            exit 0
+          fi
+
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "SMO v0.1.0" \
+            --notes-file docs/releases/smo-v0.1.0.md \
+            model/smo.ttl \
+            model/publication-contract.json \
+            publication/backend-targets.json
+
+          tag_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq '.object.sha')"
+          test "$tag_sha" = "$GITHUB_SHA"
+          echo "SUCCESS: $TAG and GitHub Release point to $GITHUB_SHA."
