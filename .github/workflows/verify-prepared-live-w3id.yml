@@ -7,7 +7,7 @@ on:
       - ".github/workflows/verify-prepared-live-w3id.yml"
   push:
     branches:
-      - agent/verify-smo-v0.1.0-routes
+      - agent/harden-live-w3id-verifier
     paths:
       - "publication/verify-live-w3id.py"
       - ".github/workflows/verify-prepared-live-w3id.yml"
@@ -34,10 +34,11 @@ jobs:
       - name: Compile live verifier
         run: python -m py_compile publication/verify-live-w3id.py
 
-      - name: Exercise current and immutable verifier contract without network access
+      - name: Exercise redirect, backend, and retry contracts without network access
         shell: bash
         run: |
           python - <<'PY'
+          import http.client
           import importlib.util
           from pathlib import Path
 
@@ -56,40 +57,37 @@ jobs:
           <https://w3id.org/smo#ImplementationProjection> a owl:Class .
           '''
 
-          def good_request(url: str, accept: str):
+          def good_redirect(url: str, accept: str):
               if url == module.BASE and accept.startswith("text/html"):
-                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
+                  return 303, module.CURRENT_HTML
               if url == module.BASE and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+                  return 303, module.CURRENT_RAW
               if url == module.DIST and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+                  return 303, module.CURRENT_RAW
               if url == module.VERSION and accept.startswith("text/html"):
-                  return module.VERSION_HTML, b"", "text/html"
+                  return 303, module.VERSION_HTML
               if url == module.VERSION and accept == "text/turtle":
-                  return module.VERSION_RAW, good_turtle, "text/turtle"
+                  return 303, module.VERSION_RAW
               if url == module.VERSION_DIST and accept == "text/turtle":
-                  return module.VERSION_RAW, good_turtle, "text/turtle"
+                  return 303, module.VERSION_RAW
               raise AssertionError((url, accept))
 
-          module.request = good_request
+          def good_fetch(url: str, accept: str = "text/turtle"):
+              assert accept == "text/turtle"
+              assert url in {module.CURRENT_RAW, module.VERSION_RAW}
+              return good_turtle, "text/turtle"
+
+          module.redirect_target = good_redirect
+          module.fetch_target = good_fetch
           assert module.main() == 0
 
-          def mutable_version_request(url: str, accept: str):
-              if url == module.BASE and accept.startswith("text/html"):
-                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
-              if url == module.BASE and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
-              if url == module.DIST and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
-              if url == module.VERSION and accept.startswith("text/html"):
-                  return module.VERSION_HTML, b"", "text/html"
+          def mutable_version_redirect(url: str, accept: str):
+              status, target = good_redirect(url, accept)
               if url == module.VERSION and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
-              if url == module.VERSION_DIST and accept == "text/turtle":
-                  return module.VERSION_RAW, good_turtle, "text/turtle"
-              raise AssertionError((url, accept))
+                  return status, module.CURRENT_RAW
+              return status, target
 
-          module.request = mutable_version_request
+          module.redirect_target = mutable_version_redirect
           try:
               module.main()
           except AssertionError as exc:
@@ -105,22 +103,14 @@ jobs:
           <https://w3id.org/smo#SemanticModel> a owl:Class .
           '''
 
-          def missing_term_request(url: str, accept: str):
-              if url == module.BASE and accept.startswith("text/html"):
-                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
-              if url == module.BASE and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
-              if url == module.DIST and accept == "text/turtle":
-                  return module.CURRENT_RAW, good_turtle, "text/turtle"
-              if url == module.VERSION and accept.startswith("text/html"):
-                  return module.VERSION_HTML, b"", "text/html"
-              if url == module.VERSION and accept == "text/turtle":
-                  return module.VERSION_RAW, bad_turtle, "text/turtle"
-              if url == module.VERSION_DIST and accept == "text/turtle":
-                  return module.VERSION_RAW, bad_turtle, "text/turtle"
-              raise AssertionError((url, accept))
+          def missing_term_fetch(url: str, accept: str = "text/turtle"):
+              assert accept == "text/turtle"
+              if url == module.VERSION_RAW:
+                  return bad_turtle, "text/turtle"
+              return good_turtle, "text/turtle"
 
-          module.request = missing_term_request
+          module.redirect_target = good_redirect
+          module.fetch_target = missing_term_fetch
           try:
               module.main()
           except AssertionError as exc:
@@ -128,5 +118,19 @@ jobs:
           else:
               raise AssertionError("missing-term negative control unexpectedly passed")
 
-          print("SUCCESS: prepared verifier proves current routes, immutable tag routing, version identity, and negative controls without network access.")
+          original_sleep = module.time.sleep
+          module.time.sleep = lambda _: None
+          attempts = {"count": 0}
+
+          def transient_then_ok():
+              attempts["count"] += 1
+              if attempts["count"] < 3:
+                  raise http.client.RemoteDisconnected("transient test disconnect")
+              return "ok"
+
+          assert module.with_retries(transient_then_ok, "offline retry test") == "ok"
+          assert attempts["count"] == 3
+          module.time.sleep = original_sleep
+
+          print("SUCCESS: hardened verifier proves W3ID redirect targets, immutable tag routing, RDF identity, negative controls, and bounded retry behavior without network access.")
           PY
