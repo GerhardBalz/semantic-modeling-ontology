@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0",
-  "status": "release-published",
+  "status": "version-active",
   "repository": "GerhardBalz/semantic-modeling-ontology",
   "branch": "main",
   "routes": [
@@ -17,17 +17,21 @@
       "route": "https://w3id.org/smo/0.1.0",
       "kind": "version",
       "target": "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl",
-      "active": false,
+      "active": true,
       "requiresTag": "smo-v0.1.0",
       "releaseExists": true,
       "releaseCommit": "e6ab3f8cf14bafae466a0150ad356547f164bdab",
-      "backendVerified": true
+      "backendVerified": true,
+      "activationRequest": "https://github.com/perma-id/w3id.org/pull/6541",
+      "activationMergeCommit": "84d541d959006ea6df14014e880020223c3c059b",
+      "verifierCommit": "e9422be4aa01e8889bb11b6e4dc38348c4e55a98",
+      "liveVerificationRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31642224022"
     }
   ],
   "notes": [
     "The current SMO W3ID route is active and was verified by GitHub Actions after perma-id/w3id.org PR #6538 merged.",
     "The governed smo-v0.1.0 release exists at e6ab3f8cf14bafae466a0150ad356547f164bdab and its tagged Turtle backend is fetchable.",
-    "The immutable 0.1.0 W3ID route is not active yet; SMO #10 owns that next publication transition.",
+    "The immutable 0.1.0 W3ID route was activated through perma-id/w3id.org PR #6541 and current + immutable routes were verified together in GitHub Actions run 31642224022.",
     "GitHub URLs are publication backends, never SMO semantic identifiers."
   ]
 }
