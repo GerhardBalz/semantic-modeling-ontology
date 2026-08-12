@@ -19,6 +19,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install verifier dependency
+        run: python -m pip install rdflib
+
       - name: Verify governed release inputs and activation gate
         shell: bash
         run: |
