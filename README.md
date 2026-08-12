@@ -2,7 +2,7 @@
 
 A small, standards-aligned ontology for authoritative semantic models and their non-authoritative implementation projections.
 
-> **Status:** v0.1 publication activation requested. The current SMO W3ID namespace request is submitted as [`perma-id/w3id.org#6538`](https://github.com/perma-id/w3id.org/pull/6538), but the namespace is **not yet claimed active** and no `smo-v0.1.0` release/tag exists yet.
+> **Status:** `activation-requested` for v0.1 publication. The current SMO W3ID namespace request is submitted as [`perma-id/w3id.org#6538`](https://github.com/perma-id/w3id.org/pull/6538), but the namespace is **not yet claimed active** and no `smo-v0.1.0` release/tag exists yet.
 
 ## Purpose
 
@@ -31,6 +31,7 @@ For derivation, source, conformance, publication, and provenance evidence, reuse
 ## Namespace and publication state
 
 ```text
+machine state       activation-requested
 term namespace      https://w3id.org/smo#
 ontology IRI        https://w3id.org/smo
 version IRI         https://w3id.org/smo/0.1.0
