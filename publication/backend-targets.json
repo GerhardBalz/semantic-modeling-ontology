@@ -1,0 +1,25 @@
+{
+  "contractVersion": "1.0",
+  "status": "pre-activation",
+  "repository": "GerhardBalz/semantic-modeling-ontology",
+  "branch": "main",
+  "routes": [
+    {
+      "route": "https://w3id.org/smo",
+      "kind": "current",
+      "target": "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl",
+      "active": false
+    },
+    {
+      "route": "https://w3id.org/smo/0.1.0",
+      "kind": "version",
+      "target": "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl",
+      "active": false,
+      "requiresTag": "smo-v0.1.0"
+    }
+  ],
+  "notes": [
+    "Prepared backend targets only; no W3ID namespace activation is claimed.",
+    "GitHub URLs are publication backends, never SMO semantic identifiers."
+  ]
+}

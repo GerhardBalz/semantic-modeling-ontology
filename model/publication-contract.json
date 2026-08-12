@@ -1,0 +1,37 @@
+{
+  "contractVersion": "1.0",
+  "status": "pre-activation",
+  "repository": "GerhardBalz/semantic-modeling-ontology",
+  "termNamespace": {
+    "current": "https://w3id.org/smo#",
+    "activationStatus": "not-active",
+    "resolver": "https://w3id.org/smo"
+  },
+  "ontology": {
+    "path": "model/smo.ttl",
+    "ontologyIri": "https://w3id.org/smo",
+    "versionIri": "https://w3id.org/smo/0.1.0",
+    "version": "0.1.0"
+  },
+  "ownedTerms": {
+    "classes": [
+      "SemanticModel",
+      "ImplementationProjection"
+    ],
+    "objectProperties": [],
+    "datatypeProperties": []
+  },
+  "publication": {
+    "backendTargets": "publication/backend-targets.json",
+    "w3idPayload": "publication/w3id/.htaccess",
+    "namespaceDocumentation": "docs/namespace-publication-versioning.md",
+    "w3idRequested": false,
+    "w3idActive": false
+  },
+  "releaseVersioning": {
+    "repositoryTagPattern": "smo-v{version}",
+    "initialRepositoryVersion": "0.1.0",
+    "releaseCreated": false,
+    "termIrisUnversioned": true
+  }
+}

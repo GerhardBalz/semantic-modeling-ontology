@@ -1,75 +1,85 @@
-# Semantic Modeling Ontology
+# Semantic Modeling Ontology (SMO)
 
-An ontology for describing semantic models, their elements, constraints, mappings, projections, provenance, and operational artifacts.
+A small, standards-aligned ontology for authoritative semantic models and their non-authoritative implementation projections.
 
-> **Status:** Exploratory. The vocabulary and its semantics are expected to evolve substantially before a first stable release.
+> **Status:** v0.1 bootstrap, pre-activation. The prepared namespace `https://w3id.org/smo#` is not yet claimed to be live, no W3ID request has been submitted by this baseline, and no `smo-v0.1.0` release/tag is created here.
 
-## Core idea
+## Purpose
 
-Semantic models should not only describe domains. They should also be machine-readable artifacts that describe their own kind, structure, language, derivation, constraints, representations, and operational projections.
+SMO defines a deliberately small reusable boundary between authoritative machine-interpretable semantics and implementation-facing projections of those semantics.
 
-The Semantic Modeling Ontology provides a small semantic foundation for describing:
+The v0.1 architectural invariant is:
 
-- ontologies and semantic models;
-- model elements and modeling languages;
-- semantic views, projections, and specializations;
-- constraints, mappings, and transformations;
-- generated and operational artifacts;
-- runtime contexts and agent contracts;
-- the Semantic Modeling Ontology itself.
+> **Projection or derivation does not transfer semantic authority.**
 
-## Conceptual flow
+An implementation projection may preserve, transform, introduce, or omit structures for its target while remaining non-authoritative for the source semantics it projects.
+
+## v0.1 vocabulary
+
+Version 0.1 owns exactly two classes and no SMO-specific relation:
+
+### `smo:SemanticModel`
+
+> A formal representation that gives knowledge explicit machine-interpretable meaning through concepts, relationships, constraints, axioms, or equivalent semantic structures.
+
+### `smo:ImplementationProjection`
+
+> A non-authoritative implementation-facing projection derived from selected semantics of a Semantic Model, preserving explicit semantic identity and relationships according to a declared preservation, transformation, introduction, and omission policy while allowing target-specific implementation concerns.
+
+For derivation, source, conformance, publication, and provenance evidence, reuse established vocabularies such as PROV-O, Dublin Core Terms, DCAT, and OWL rather than minting parallel SMO relations.
+
+## Prepared namespace
 
 ```text
-Capability
-        ↓
-Capability Ontology
-        ↓
-Capability Semantic Model
-        ↓
-Domain Models
-        ↓
-APIs / UI / Rules / Data / Agent Contracts
-        ↓
-Runtime Context
+term namespace  https://w3id.org/smo#
+ontology IRI    https://w3id.org/smo
+version IRI     https://w3id.org/smo/0.1.0
+version         0.1.0
 ```
 
-The ontology describes the relationships between these artifacts without attempting to replace the specialized languages used to implement them.
+These are prepared semantic identifiers. Until W3ID activation is completed and externally verified, the publication status remains **pre-activation**.
+
+GitHub URLs in the publication configuration are backend locations only and are never SMO semantic identities.
 
 ## Repository structure
 
 ```text
-.
-├── README.md
-├── CONTRIBUTING.md
-├── LICENSE
-├── docs/
-│   └── architecture.md
-├── ontology/
-│   └── semantic-modeling.ttl
-├── shapes/
-│   └── semantic-modeling-shapes.ttl
-└── examples/
-    └── self-description.ttl
+README.md
+LICENSE
+CONTRIBUTING.md
+model/
+  smo.ttl
+  publication-contract.json
+  verify-model.py
+publication/
+  backend-targets.json
+  w3id/
+    .htaccess
+docs/
+  namespace-publication-versioning.md
+.github/
+  workflows/
+    verify.yml
 ```
 
-## Architecture
+The earlier exploratory meta-ontology surface has intentionally been removed from the v0.1 baseline. Runtime context, agent contracts, model kinds, mappings, transformations, representations, authority vocabulary, and similar concepts require separate evidence before becoming SMO-owned terms.
 
-The design rationale, scope, competency questions, core concepts, and open questions are maintained in [`docs/architecture.md`](docs/architecture.md).
+## Verification
 
-## Contributing
+Install the validator dependency and run the executable acceptance contract:
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repository workflow and contribution guidelines.
+```bash
+python -m pip install rdflib
+python model/verify-model.py
+```
 
-## Initial milestone
+CI runs the same verification for pull requests and pushes to `main`.
 
-The first milestone is **v0.1 — Models, projections, and artifacts**. It should demonstrate that:
+## Publication and versioning
 
-1. the ontology can describe itself as a semantic model;
-2. SHACL can validate that self-description;
-3. one model can be represented as a projection or specialization of another;
-4. operational artifacts can be traced to the models from which they were derived;
-5. SPARQL can inspect the resulting model graph.
+See [`docs/namespace-publication-versioning.md`](docs/namespace-publication-versioning.md) for the machine-aligned namespace, backend, staging, versioning, and acceptance contract.
+
+The prepared W3ID payload is intentionally inactive. Do not request `w3id.org/smo`, create `smo-v0.1.0`, modify ESKA `SemanticModel`, or align Pizza as part of this bootstrap PR.
 
 ## License
 

@@ -1,0 +1,23 @@
+@prefix smo: <https://w3id.org/smo#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/smo>
+    a owl:Ontology ;
+    dcterms:title "Semantic Modeling Ontology"@en ;
+    dcterms:description "A small, standards-aligned ontology for authoritative semantic models and their non-authoritative implementation projections."@en ;
+    dcterms:creator "Gerhard Balz" ;
+    dcterms:license <https://opensource.org/license/mit> ;
+    owl:versionIRI <https://w3id.org/smo/0.1.0> ;
+    owl:versionInfo "0.1.0" .
+
+smo:SemanticModel
+    a owl:Class ;
+    rdfs:label "Semantic Model"@en ;
+    rdfs:comment "A formal representation that gives knowledge explicit machine-interpretable meaning through concepts, relationships, constraints, axioms, or equivalent semantic structures."@en .
+
+smo:ImplementationProjection
+    a owl:Class ;
+    rdfs:label "Implementation Projection"@en ;
+    rdfs:comment "A non-authoritative implementation-facing projection derived from selected semantics of a Semantic Model, preserving explicit semantic identity and relationships according to a declared preservation, transformation, introduction, and omission policy while allowing target-specific implementation concerns."@en .
