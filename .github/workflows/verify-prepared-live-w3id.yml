@@ -7,7 +7,7 @@ on:
       - ".github/workflows/verify-prepared-live-w3id.yml"
   push:
     branches:
-      - agent/prepare-live-w3id-verification
+      - agent/verify-smo-v0.1.0-routes
     paths:
       - "publication/verify-live-w3id.py"
       - ".github/workflows/verify-prepared-live-w3id.yml"
@@ -34,7 +34,7 @@ jobs:
       - name: Compile live verifier
         run: python -m py_compile publication/verify-live-w3id.py
 
-      - name: Exercise live-verifier contract without network access
+      - name: Exercise current and immutable verifier contract without network access
         shell: bash
         run: |
           python - <<'PY'
@@ -48,6 +48,10 @@ jobs:
           spec.loader.exec_module(module)
 
           good_turtle = b'''@prefix owl: <http://www.w3.org/2002/07/owl#> .
+          <https://w3id.org/smo>
+              a owl:Ontology ;
+              owl:versionIRI <https://w3id.org/smo/0.1.0> ;
+              owl:versionInfo "0.1.0" .
           <https://w3id.org/smo#SemanticModel> a owl:Class .
           <https://w3id.org/smo#ImplementationProjection> a owl:Class .
           '''
@@ -56,34 +60,73 @@ jobs:
               if url == module.BASE and accept.startswith("text/html"):
                   return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
               if url == module.BASE and accept == "text/turtle":
-                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", good_turtle, "text/turtle"
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
               if url == module.DIST and accept == "text/turtle":
-                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", good_turtle, "text/turtle"
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+              if url == module.VERSION and accept.startswith("text/html"):
+                  return module.VERSION_HTML, b"", "text/html"
+              if url == module.VERSION and accept == "text/turtle":
+                  return module.VERSION_RAW, good_turtle, "text/turtle"
+              if url == module.VERSION_DIST and accept == "text/turtle":
+                  return module.VERSION_RAW, good_turtle, "text/turtle"
               raise AssertionError((url, accept))
 
           module.request = good_request
           assert module.main() == 0
 
-          bad_turtle = b'''@prefix owl: <http://www.w3.org/2002/07/owl#> .
-          <https://w3id.org/smo#SemanticModel> a owl:Class .
-          '''
-
-          def bad_request(url: str, accept: str):
+          def mutable_version_request(url: str, accept: str):
               if url == module.BASE and accept.startswith("text/html"):
                   return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
               if url == module.BASE and accept == "text/turtle":
-                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", bad_turtle, "text/turtle"
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
               if url == module.DIST and accept == "text/turtle":
-                  return "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl", bad_turtle, "text/turtle"
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+              if url == module.VERSION and accept.startswith("text/html"):
+                  return module.VERSION_HTML, b"", "text/html"
+              if url == module.VERSION and accept == "text/turtle":
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+              if url == module.VERSION_DIST and accept == "text/turtle":
+                  return module.VERSION_RAW, good_turtle, "text/turtle"
               raise AssertionError((url, accept))
 
-          module.request = bad_request
+          module.request = mutable_version_request
           try:
               module.main()
           except AssertionError as exc:
-              assert "ImplementationProjection missing" in str(exc)
+              assert "Immutable Turtle route resolved unexpectedly" in str(exc)
           else:
-              raise AssertionError("negative control unexpectedly passed")
+              raise AssertionError("mutable immutable-route negative control unexpectedly passed")
 
-          print("SUCCESS: prepared live W3ID verifier passes its offline contract and rejects missing vocabulary evidence.")
+          bad_turtle = b'''@prefix owl: <http://www.w3.org/2002/07/owl#> .
+          <https://w3id.org/smo>
+              a owl:Ontology ;
+              owl:versionIRI <https://w3id.org/smo/0.1.0> ;
+              owl:versionInfo "0.1.0" .
+          <https://w3id.org/smo#SemanticModel> a owl:Class .
+          '''
+
+          def missing_term_request(url: str, accept: str):
+              if url == module.BASE and accept.startswith("text/html"):
+                  return "https://github.com/GerhardBalz/semantic-modeling-ontology", b"", "text/html"
+              if url == module.BASE and accept == "text/turtle":
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+              if url == module.DIST and accept == "text/turtle":
+                  return module.CURRENT_RAW, good_turtle, "text/turtle"
+              if url == module.VERSION and accept.startswith("text/html"):
+                  return module.VERSION_HTML, b"", "text/html"
+              if url == module.VERSION and accept == "text/turtle":
+                  return module.VERSION_RAW, bad_turtle, "text/turtle"
+              if url == module.VERSION_DIST and accept == "text/turtle":
+                  return module.VERSION_RAW, bad_turtle, "text/turtle"
+              raise AssertionError((url, accept))
+
+          module.request = missing_term_request
+          try:
+              module.main()
+          except AssertionError as exc:
+              assert "ImplementationProjection missing from immutable v0.1.0 RDF" in str(exc)
+          else:
+              raise AssertionError("missing-term negative control unexpectedly passed")
+
+          print("SUCCESS: prepared verifier proves current routes, immutable tag routing, version identity, and negative controls without network access.")
           PY
