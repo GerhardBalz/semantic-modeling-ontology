@@ -27,5 +27,5 @@ jobs:
       - name: Install verifier dependency
         run: python -m pip install rdflib
 
-      - name: Verify live current W3ID routes
+      - name: Verify live current and immutable W3ID routes
         run: python publication/verify-live-w3id.py
