@@ -2,13 +2,22 @@
 
 ## Status
 
-The SMO publication contract is **pre-activation**. This repository prepares the namespace and backend payload but does not claim that W3ID routing is live.
+The SMO publication contract is **activation-requested**.
 
-No W3ID request, release, or tag is created by the v0.1 bootstrap.
+The initial current-route request has been submitted upstream as:
+
+```text
+perma-id/w3id.org PR #6538
+https://github.com/perma-id/w3id.org/pull/6538
+```
+
+The PR is not yet merged. Therefore this repository does **not** claim that `https://w3id.org/smo` is live, and the machine-readable route metadata remains `active: false`.
+
+No `smo-v0.1.0` release/tag exists yet, and no immutable `0.1.0` W3ID route has been requested.
 
 ## Semantic identity
 
-The prepared term namespace is:
+The term namespace is:
 
 ```text
 https://w3id.org/smo#
@@ -28,7 +37,7 @@ https://w3id.org/smo/0.1.0
 
 SMO term IRIs are unversioned. Version IRIs identify immutable ontology versions; they do not replace the stable term namespace.
 
-GitHub repository and raw-content URLs are publication backends only. They are not semantic identifiers and must not appear as SMO term or ontology identity.
+GitHub repository and raw-content URLs are publication backends only. They are not semantic identifiers.
 
 ## v0.1 conceptual boundary
 
@@ -48,39 +57,80 @@ No SMO-owned relation is introduced in v0.1. Implementations should use establis
 
 The architectural invariant is that an implementation projection is non-authoritative for the semantics it projects. Derivation or projection does not by itself transfer semantic authority.
 
-## Publication staging
+## Publication state machine
 
-Publication is intentionally staged:
+SMO publication is intentionally explicit about observable transitions:
 
-1. maintain the governed repository baseline;
-2. define the ontology and machine-readable publication contract;
-3. verify the ontology, namespace, and prepared backend targets in CI;
-4. prepare the W3ID redirect payload;
-5. review and merge the repository baseline;
-6. create the governed `smo-v0.1.0` release/tag when the publication baseline is approved;
-7. request `w3id.org/smo` activation;
-8. verify live current and immutable version routes externally;
-9. only then align downstream vocabularies such as ESKA and Pizza.
+```text
+pre-activation
+    ↓ upstream W3ID request submitted
+activation-requested        ← current state
+    ↓ upstream merge + external HTML/Turtle verification
+current-active
+    ↓ create governed smo-v0.1.0 release
+release-published
+    ↓ submit + merge immutable version route
+version-active
+```
 
-The exact release/W3ID ordering may be performed as one publication change set, but a version route must never be advertised as live before its immutable backend exists.
+A stage may only be claimed after its observable condition is satisfied.
+
+### Current transition
+
+W3ID PR #6538 contains only current routes:
+
+- browser requests for `https://w3id.org/smo` → governed SMO repository;
+- Turtle requests for `https://w3id.org/smo` → current authoritative `main/model/smo.ttl`;
+- `/docs` → namespace/publication documentation;
+- `/dist/smo.ttl` → current authoritative Turtle.
+
+It deliberately contains no `0.1.0` version route.
 
 ## Prepared backend targets
 
-`publication/backend-targets.json` records the planned current and immutable targets. `publication/w3id/.htaccess` contains the corresponding W3ID payload.
+`publication/backend-targets.json` records both current and planned immutable targets.
 
-Both artifacts are explicitly marked pre-activation. A raw GitHub target is transport infrastructure, not an ontology IRI.
+The current route records W3ID PR #6538 as its activation request but remains inactive until upstream merge and external verification.
+
+The planned immutable route targets:
+
+```text
+https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl
+```
+
+and therefore cannot become active before `smo-v0.1.0` exists.
+
+The submitted W3ID payload under `publication/w3id/` remains the current-route activation payload. Its pre-activation wording describes the resolver state of that payload before upstream activation and does not assert that the request itself has not been submitted.
+
+## Next steps after W3ID merge
+
+When PR #6538 merges:
+
+1. verify `https://w3id.org/smo` externally as HTML;
+2. verify Turtle content negotiation externally;
+3. verify returned RDF contains `https://w3id.org/smo#SemanticModel` and `https://w3id.org/smo#ImplementationProjection`;
+4. make live resolver verification executable in CI;
+5. update `w3idActive` and the current route only after those checks pass;
+6. create the governed `smo-v0.1.0` release/tag;
+7. add immutable W3ID routes for `https://w3id.org/smo/0.1.0`;
+8. verify current and immutable routes together;
+9. only then execute downstream SMO #11 alignment in ESKA and Pizza.
 
 ## Versioning
 
 The initial semantic version is `0.1.0`.
 
-The planned repository tag pattern is:
+The repository tag pattern is:
 
 ```text
 smo-v{version}
 ```
 
-The initial immutable tag will therefore be `smo-v0.1.0`, but the bootstrap does not create it.
+The initial immutable tag will therefore be:
+
+```text
+smo-v0.1.0
+```
 
 Compatibility guidance for later versions:
 
@@ -99,7 +149,20 @@ Compatibility guidance for later versions:
 5. no SMO-owned object or datatype property is introduced;
 6. no accidental ESKA execution, capability, service, agent, result, verification, or deployment vocabulary enters SMO;
 7. no GitHub repository URL becomes semantic identity;
-8. prepared W3ID targets point to this governed repository and remain explicitly inactive;
-9. this documentation and the README state the same namespace/version/pre-activation contract.
+8. the W3ID request is recorded as submitted through PR #6538;
+9. neither current nor immutable route is claimed active prematurely;
+10. no release is claimed before `smo-v0.1.0` exists;
+11. this documentation and the README state the same activation-requested contract.
 
-Repository publication additionally requires the GitHub repository to be public with the approved description before W3ID activation.
+## Downstream gate
+
+SMO #11 deliberately remains blocked while publication is incomplete.
+
+Do not yet:
+
+- modify ESKA `SemanticModel` compatibility;
+- add SMO typing to Pizza as a canonical dependency;
+- mark `eska:SemanticModel` deprecated;
+- change immutable `eska-v0.1.0`.
+
+The live namespace and immutable v0.1.0 evidence are the gate that makes downstream cross-repository references durable rather than provisional.
