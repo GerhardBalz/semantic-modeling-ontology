@@ -1,9 +1,23 @@
+# SMO — Semantic Modeling Ontology
+# Point of contact: Gerhard Balz — GitHub @GerhardBalz
+# Canonical project: https://github.com/GerhardBalz/semantic-modeling-ontology
+#
 # PRE-ACTIVATION payload for https://w3id.org/smo
-# Do not submit or activate until the repository baseline is reviewed and the immutable release tag exists.
+# Only current routes are activated at this stage. Immutable version routes are
+# added only after the governed smo-v0.1.0 release tag exists.
+
+Options +FollowSymLinks -Indexes
 RewriteEngine On
 
-# Immutable v0.1.0 ontology document. The backend becomes valid after tag smo-v0.1.0 is created.
-RewriteRule ^0\.1\.0/?$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl [R=302,L]
+# Vocabulary base / hash namespace document.
+# RDF clients receive authoritative Turtle; browsers receive project documentation.
+RewriteCond %{HTTP_ACCEPT} text/turtle [NC]
+RewriteRule ^$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl [R=303,NE,L]
 
-# Current ontology document.
-RewriteRule ^$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl [R=302,L]
+RewriteRule ^$ https://github.com/GerhardBalz/semantic-modeling-ontology [R=303,NE,L]
+
+# Human-readable namespace/publication documentation.
+RewriteRule ^docs/?$ https://github.com/GerhardBalz/semantic-modeling-ontology/blob/main/docs/namespace-publication-versioning.md [R=303,NE,L]
+
+# Current explicit Turtle distribution route.
+RewriteRule ^dist/smo\.ttl$ https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl [R=303,NE,L]
