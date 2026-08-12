@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0",
-  "status": "release-published",
+  "status": "version-active",
   "repository": "GerhardBalz/semantic-modeling-ontology",
   "termNamespace": {
     "current": "https://w3id.org/smo#",
@@ -29,7 +29,13 @@
     "w3idPullRequest": "https://github.com/perma-id/w3id.org/pull/6538",
     "w3idMergeCommit": "42367a77c52b60dab4cdf55327fca023e78a61a4",
     "w3idActive": true,
-    "liveVerificationRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287"
+    "liveVerificationRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287",
+    "versionW3idRequested": true,
+    "versionW3idPullRequest": "https://github.com/perma-id/w3id.org/pull/6541",
+    "versionW3idMergeCommit": "84d541d959006ea6df14014e880020223c3c059b",
+    "versionW3idActive": true,
+    "versionVerifierCommit": "e9422be4aa01e8889bb11b6e4dc38348c4e55a98",
+    "versionLiveVerificationRun": "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31642224022"
   },
   "releaseVersioning": {
     "repositoryTagPattern": "smo-v{version}",
