@@ -3,8 +3,8 @@
 """Verify live current and immutable SMO W3ID routes.
 
 The verifier treats W3ID redirect behavior and backend content as separate
-contracts: inspect W3ID's redirect response without following browser redirects,
-then fetch RDF backends independently for semantic evidence.
+contracts: it follows only internal w3id.org canonicalization hops, stops before
+external publication backends, and fetches RDF backends independently.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import TypeVar
+from urllib.parse import urljoin, urlparse
 
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF
@@ -35,8 +36,10 @@ SEMANTIC_MODEL = URIRef("https://w3id.org/smo#SemanticModel")
 IMPLEMENTATION_PROJECTION = URIRef("https://w3id.org/smo#ImplementationProjection")
 VERSION_IRI = URIRef(VERSION)
 
+W3ID_HOST = "w3id.org"
 REDIRECT_CODES = {301, 302, 303, 307, 308}
-EXPECTED_REDIRECT_CODE = 303
+EXPECTED_BACKEND_REDIRECT_CODE = 303
+MAX_W3ID_HOPS = 5
 MAX_ATTEMPTS = 3
 T = TypeVar("T")
 
@@ -80,13 +83,13 @@ def with_retries(operation: Callable[[], T], label: str) -> T:
     raise AssertionError(f"unreachable retry state for {label}: {last_error}")
 
 
-def redirect_target(url: str, accept: str) -> tuple[int, str]:
-    """Return W3ID's redirect status and Location without following it."""
+def redirect_once(url: str, accept: str) -> tuple[int, str]:
+    """Return one redirect status and Location without following it."""
 
     def once() -> tuple[int, str]:
         request = urllib.request.Request(
             url,
-            headers={"Accept": accept, "User-Agent": "SMO-live-verifier/0.2"},
+            headers={"Accept": accept, "User-Agent": "SMO-live-verifier/0.3"},
         )
         opener = urllib.request.build_opener(NoRedirect)
         try:
@@ -107,13 +110,43 @@ def redirect_target(url: str, accept: str) -> tuple[int, str]:
     return with_retries(once, f"redirect inspection for {url}")
 
 
+def redirect_target(url: str, accept: str) -> tuple[int, str]:
+    """Resolve internal W3ID canonicalization but never follow external backends."""
+
+    current = url
+    visited: set[str] = set()
+
+    for hop in range(1, MAX_W3ID_HOPS + 1):
+        require(current not in visited, f"W3ID redirect loop detected at {current}")
+        visited.add(current)
+
+        status, location = redirect_once(current, accept)
+        target = urljoin(current, location)
+        target_host = (urlparse(target).hostname or "").lower()
+
+        if target_host == W3ID_HOST:
+            print(
+                f"W3ID internal canonicalization hop {hop}: "
+                f"{current} --HTTP {status}--> {target}",
+                file=sys.stderr,
+            )
+            current = target
+            continue
+
+        return status, target
+
+    raise AssertionError(
+        f"W3ID redirect chain exceeded {MAX_W3ID_HOPS} internal hops starting at {url}"
+    )
+
+
 def fetch_target(url: str, accept: str = "text/turtle") -> tuple[bytes, str]:
     """Fetch backend content separately from the W3ID redirect assertion."""
 
     def once() -> tuple[bytes, str]:
         request = urllib.request.Request(
             url,
-            headers={"Accept": accept, "User-Agent": "SMO-live-verifier/0.2"},
+            headers={"Accept": accept, "User-Agent": "SMO-live-verifier/0.3"},
         )
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
@@ -149,16 +182,17 @@ def require_v01_terms(graph: Graph, label: str) -> None:
 def require_redirect(url: str, accept: str, expected_target: str, label: str) -> str:
     status, target = redirect_target(url, accept)
     require(
-        status == EXPECTED_REDIRECT_CODE,
-        f"{label} returned HTTP {status}, expected {EXPECTED_REDIRECT_CODE}",
+        status == EXPECTED_BACKEND_REDIRECT_CODE,
+        f"{label} final W3ID redirect returned HTTP {status}, "
+        f"expected {EXPECTED_BACKEND_REDIRECT_CODE}",
     )
     require(target == expected_target, f"{label} resolved unexpectedly: {target}")
     return target
 
 
 def main() -> int:
-    # Current routes remain governed by main. HTML evidence is the W3ID Location;
-    # do not follow it into GitHub because GitHub availability is a separate concern.
+    # Current routes remain governed by main. Internal W3ID canonicalization may
+    # occur first; the terminal external redirect must still be the governed 303.
     current_html_target = require_redirect(
         BASE,
         "text/html,application/xhtml+xml",
