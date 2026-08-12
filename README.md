@@ -2,7 +2,7 @@
 
 A small, standards-aligned ontology for authoritative semantic models and their non-authoritative implementation projections.
 
-> **Status:** the current W3ID publication is **active and live-verified**, and the first governed immutable repository release [`smo-v0.1.0`](https://github.com/GerhardBalz/semantic-modeling-ontology/releases/tag/smo-v0.1.0) is published. The immutable `https://w3id.org/smo/0.1.0` route is the next governed transition and is not active yet.
+> **Status:** SMO publication is **version-active**. The current namespace `https://w3id.org/smo` and immutable version IRI `https://w3id.org/smo/0.1.0` are active and live-verified. The governed immutable repository release [`smo-v0.1.0`](https://github.com/GerhardBalz/semantic-modeling-ontology/releases/tag/smo-v0.1.0) remains the backend for the versioned route.
 
 ## Purpose
 
@@ -31,23 +31,23 @@ For derivation, source, conformance, publication, and provenance evidence, reuse
 ## Namespace and publication state
 
 ```text
-machine state       release-published
-term namespace      https://w3id.org/smo#
-ontology IRI        https://w3id.org/smo
-version IRI         https://w3id.org/smo/0.1.0
-semantic version    0.1.0
-W3ID current route  active and live-verified
-immutable release   smo-v0.1.0 — published
-release commit      e6ab3f8cf14bafae466a0150ad356547f164bdab
-immutable backend   verified
-immutable W3ID route not yet active
+machine state         version-active
+term namespace        https://w3id.org/smo#
+ontology IRI          https://w3id.org/smo
+version IRI           https://w3id.org/smo/0.1.0
+semantic version      0.1.0
+W3ID current route    active and live-verified
+immutable release     smo-v0.1.0 — published
+release commit        e6ab3f8cf14bafae466a0150ad356547f164bdab
+immutable backend     verified
+immutable W3ID route  active and live-verified
 ```
 
-Current-route activation evidence is recorded in `model/publication-contract.json`: upstream W3ID merge commit `42367a77c52b60dab4cdf55327fca023e78a61a4` and live verification workflow run `31627245287`.
+Current-route activation evidence is recorded in `model/publication-contract.json`: upstream W3ID PR #6538, merge commit `42367a77c52b60dab4cdf55327fca023e78a61a4`, and live verification run `31627245287`.
 
 Release evidence is also recorded there: tag `smo-v0.1.0`, governed release commit `e6ab3f8cf14bafae466a0150ad356547f164bdab`, publisher run `31633781524`, and the verified immutable Turtle backend under the tag.
 
-The immutable `https://w3id.org/smo/0.1.0` route remains inactive until SMO #10 is submitted, merged upstream, and externally verified.
+Immutable version-route evidence is recorded as upstream W3ID PR #6541, merge commit `84d541d959006ea6df14014e880020223c3c059b`, verifier commit `e9422be4aa01e8889bb11b6e4dc38348c4e55a98`, and successful current+immutable live verification run `31642224022`.
 
 GitHub URLs in the publication configuration are backend locations only and are never SMO semantic identities.
 
@@ -94,21 +94,19 @@ python model/verify-model.py
 The governed verifier proves that:
 
 1. the ontology still owns exactly `SemanticModel` and `ImplementationProjection` and no SMO properties;
-2. W3ID PR #6538 and its merge evidence are recorded;
-3. the current route is active only with successful live verification evidence;
-4. the governed `smo-v0.1.0` release and exact release commit are recorded;
-5. the immutable tagged backend exists and is recorded as verified;
-6. the immutable W3ID route remains inactive until its separate upstream activation succeeds.
+2. W3ID PR #6538 and current-route merge/live evidence are recorded;
+3. the governed `smo-v0.1.0` release and exact release commit are recorded;
+4. the immutable tagged backend exists and is recorded as verified;
+5. W3ID PR #6541 and immutable-route merge/live evidence are recorded;
+6. both current and immutable routes are active only with successful live verification evidence.
 
-The live resolver verifier is `publication/verify-live-w3id.py` and is executable through GitHub Actions.
+The live resolver verifier is `publication/verify-live-w3id.py`. It follows only internal `w3id.org` canonicalization hops, verifies terminal governed redirect targets, and fetches RDF backends separately for semantic evidence.
 
 ## Publication and versioning
 
-See [`docs/namespace-publication-versioning.md`](docs/namespace-publication-versioning.md) for the machine-aligned namespace, backend, staging, versioning, and acceptance contract.
+See [`docs/namespace-publication-versioning.md`](docs/namespace-publication-versioning.md) for the machine-aligned namespace, backend, state-machine, versioning, and acceptance contract.
 
-The next governed transition is SMO #10: activate immutable W3ID routing for `https://w3id.org/smo/0.1.0` against the already-published `smo-v0.1.0` backend, then verify current and immutable routes together.
-
-Downstream ESKA/Pizza alignment remains staged under SMO #11 until both current and immutable publication evidence exist.
+The publication gate for durable downstream references is now satisfied. The next governed activity is SMO #11: evaluate downstream SMO alignment in ESKA and Pizza without modifying immutable `smo-v0.1.0`, immutable `eska-v0.1.0`, or historical Pizza semantics merely for symmetry.
 
 ## License
 
