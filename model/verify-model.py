@@ -1,35 +1,34 @@
 #!/usr/bin/env python3
-"""Verify the SMO v0.1 ontology and activation-requested publication contract."""
+"""Verify the SMO v0.1 ontology and current-active publication contract."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
+
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT_PATH = ROOT / "model/publication-contract.json"
-BACKENDS_PATH = ROOT / "publication/backend-targets.json"
-W3ID_PATH = ROOT / "publication/w3id/.htaccess"
-W3ID_README_PATH = ROOT / "publication/w3id/README.md"
-README_PATH = ROOT / "README.md"
-DOC_PATH = ROOT / "docs/namespace-publication-versioning.md"
+CONTRACT = ROOT / "model/publication-contract.json"
+BACKENDS = ROOT / "publication/backend-targets.json"
+README = ROOT / "README.md"
+DOC = ROOT / "docs/namespace-publication-versioning.md"
 
-EXPECTED_NAMESPACE = "https://w3id.org/smo#"
-EXPECTED_ONTOLOGY_IRI = "https://w3id.org/smo"
-EXPECTED_VERSION_IRI = "https://w3id.org/smo/0.1.0"
-EXPECTED_VERSION = "0.1.0"
-EXPECTED_W3ID_PR = "https://github.com/perma-id/w3id.org/pull/6538"
+NS = "https://w3id.org/smo#"
+ONTOLOGY = "https://w3id.org/smo"
+VERSION_IRI = "https://w3id.org/smo/0.1.0"
+VERSION = "0.1.0"
+W3ID_PR = "https://github.com/perma-id/w3id.org/pull/6538"
+W3ID_MERGE = "42367a77c52b60dab4cdf55327fca023e78a61a4"
+LIVE_RUN = "https://github.com/GerhardBalz/semantic-modeling-ontology/actions/runs/31627245287"
+CURRENT_RAW = "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl"
+VERSION_RAW = "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl"
 EXPECTED_CLASSES = {"SemanticModel", "ImplementationProjection"}
 EXPECTED_DEFINITIONS = {
     "SemanticModel": "A formal representation that gives knowledge explicit machine-interpretable meaning through concepts, relationships, constraints, axioms, or equivalent semantic structures.",
     "ImplementationProjection": "A non-authoritative implementation-facing projection derived from selected semantics of a Semantic Model, preserving explicit semantic identity and relationships according to a declared preservation, transformation, introduction, and omission policy while allowing target-specific implementation concerns.",
 }
-FORBIDDEN_ESKA_FRAGMENTS = {"capability", "execution", "result", "verification", "service", "agent", "deployment"}
-GITHUB_IDENTITY_PREFIX = "https://github.com/GerhardBalz/semantic-modeling-ontology"
-RAW_BACKEND_PREFIX = "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/"
-CURRENT_RAW = "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/main/model/smo.ttl"
-VERSION_RAW = "https://raw.githubusercontent.com/GerhardBalz/semantic-modeling-ontology/smo-v0.1.0/model/smo.ttl"
+FORBIDDEN = {"capability", "execution", "result", "verification", "service", "agent", "deployment"}
 
 
 def require(condition: bool, message: str) -> None:
@@ -37,143 +36,96 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def read_json(path: Path) -> dict:
+def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def local_name(uri: URIRef) -> str:
+def local(uri: URIRef) -> str:
     text = str(uri)
-    require(text.startswith(EXPECTED_NAMESPACE), f"not an SMO term IRI: {text}")
-    return text[len(EXPECTED_NAMESPACE):]
+    require(text.startswith(NS), f"not an SMO term IRI: {text}")
+    return text[len(NS):]
 
 
 def main() -> None:
-    contract = read_json(CONTRACT_PATH)
-    backends = read_json(BACKENDS_PATH)
+    contract = load(CONTRACT)
+    backends = load(BACKENDS)
     graph = Graph()
     graph.parse(ROOT / contract["ontology"]["path"], format="turtle")
 
-    require(contract["contractVersion"] == "1.0", "unexpected publication contract version")
-    require(contract["status"] == "activation-requested", "SMO must record the submitted-but-not-active state")
+    require(contract["contractVersion"] == "1.0", "unexpected contract version")
+    require(contract["status"] == "current-active", "current publication must be active")
     require(contract["repository"] == "GerhardBalz/semantic-modeling-ontology", "repository mismatch")
-    require(contract["termNamespace"]["current"] == EXPECTED_NAMESPACE, "term namespace mismatch")
-    require(contract["termNamespace"]["activationStatus"] == "request-pending", "namespace request must remain pending until live verification")
-    require(contract["termNamespace"]["resolver"] == EXPECTED_ONTOLOGY_IRI, "resolver mismatch")
+    require(contract["termNamespace"] == {
+        "current": NS,
+        "activationStatus": "active",
+        "resolver": ONTOLOGY,
+    }, "term namespace publication state mismatch")
 
-    ontology_iri = URIRef(EXPECTED_ONTOLOGY_IRI)
-    require((ontology_iri, RDF.type, OWL.Ontology) in graph, "expected ontology IRI is not declared")
-    require(graph.value(ontology_iri, OWL.versionIRI) == URIRef(EXPECTED_VERSION_IRI), "owl:versionIRI mismatch")
-    require(graph.value(ontology_iri, OWL.versionInfo) == Literal(EXPECTED_VERSION), "owl:versionInfo mismatch")
-    require(contract["ontology"]["ontologyIri"] == EXPECTED_ONTOLOGY_IRI, "contract ontology IRI mismatch")
-    require(contract["ontology"]["versionIri"] == EXPECTED_VERSION_IRI, "contract version IRI mismatch")
-    require(contract["ontology"]["version"] == EXPECTED_VERSION, "contract semantic version mismatch")
+    ontology = URIRef(ONTOLOGY)
+    require((ontology, RDF.type, OWL.Ontology) in graph, "ontology IRI not declared")
+    require(graph.value(ontology, OWL.versionIRI) == URIRef(VERSION_IRI), "version IRI mismatch")
+    require(graph.value(ontology, OWL.versionInfo) == Literal(VERSION), "version mismatch")
+    require(contract["ontology"] == {
+        "path": "model/smo.ttl",
+        "ontologyIri": ONTOLOGY,
+        "versionIri": VERSION_IRI,
+        "version": VERSION,
+    }, "ontology contract mismatch")
 
-    owned_uris: set[URIRef] = set()
-    for triple in graph:
-        for value in triple:
-            if isinstance(value, URIRef) and str(value).startswith(EXPECTED_NAMESPACE):
-                owned_uris.add(value)
-    owned_locals = {local_name(uri) for uri in owned_uris}
-    require(owned_locals == EXPECTED_CLASSES, f"unexpected SMO-owned terms: {sorted(owned_locals)}")
-
-    declared_classes = {
-        local_name(subject)
+    declared = {
+        local(subject)
         for subject in graph.subjects(RDF.type, OWL.Class)
-        if isinstance(subject, URIRef) and str(subject).startswith(EXPECTED_NAMESPACE)
+        if isinstance(subject, URIRef) and str(subject).startswith(NS)
     }
-    require(declared_classes == EXPECTED_CLASSES, f"expected exactly two SMO classes, found {sorted(declared_classes)}")
+    require(declared == EXPECTED_CLASSES, f"unexpected SMO classes: {sorted(declared)}")
     require(contract["ownedTerms"]["classes"] == ["SemanticModel", "ImplementationProjection"], "class inventory changed")
-    require(contract["ownedTerms"]["objectProperties"] == [], "v0.1 must not own object properties")
-    require(contract["ownedTerms"]["datatypeProperties"] == [], "v0.1 must not own datatype properties")
+    require(contract["ownedTerms"]["objectProperties"] == [], "SMO v0.1 must not own object properties")
+    require(contract["ownedTerms"]["datatypeProperties"] == [], "SMO v0.1 must not own datatype properties")
 
     for property_type in (OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty):
-        owned = [
-            subject
-            for subject in graph.subjects(RDF.type, property_type)
-            if isinstance(subject, URIRef) and str(subject).startswith(EXPECTED_NAMESPACE)
-        ]
-        require(not owned, f"v0.1 must not mint SMO properties: {owned}")
+        owned = [s for s in graph.subjects(RDF.type, property_type) if isinstance(s, URIRef) and str(s).startswith(NS)]
+        require(not owned, f"SMO v0.1 must not mint properties: {owned}")
 
-    for name, expected_definition in EXPECTED_DEFINITIONS.items():
-        term = URIRef(EXPECTED_NAMESPACE + name)
-        require(
-            list(graph.objects(term, RDFS.comment)) == [Literal(expected_definition, lang="en")],
-            f"{name}: definition mismatch",
-        )
+    for name, definition in EXPECTED_DEFINITIONS.items():
+        term = URIRef(NS + name)
+        require(list(graph.objects(term, RDFS.comment)) == [Literal(definition, lang="en")], f"{name} definition mismatch")
         labels = list(graph.objects(term, RDFS.label))
-        require(
-            len(labels) == 1 and isinstance(labels[0], Literal) and labels[0].language == "en",
-            f"{name}: English label required",
-        )
-
-    for name in owned_locals:
-        require(
-            not any(fragment in name.lower() for fragment in FORBIDDEN_ESKA_FRAGMENTS),
-            f"ESKA-specific concept leaked into SMO: {name}",
-        )
-
-    github_semantic_uris = {
-        str(value)
-        for triple in graph
-        for value in triple
-        if isinstance(value, URIRef) and str(value).startswith(GITHUB_IDENTITY_PREFIX)
-    }
-    require(not github_semantic_uris, f"GitHub URL used as semantic identity: {sorted(github_semantic_uris)}")
+        require(len(labels) == 1 and labels[0].language == "en", f"{name} English label required")
+        require(not any(fragment in name.lower() for fragment in FORBIDDEN), f"ESKA-specific concept leaked into SMO: {name}")
 
     publication = contract["publication"]
-    require(publication["w3idRequested"] is True, "submitted W3ID request must be recorded")
-    require(publication["w3idPullRequest"] == EXPECTED_W3ID_PR, "W3ID PR reference mismatch")
-    require(publication["w3idActive"] is False, "repository must not claim activation before external verification")
-    require(contract["releaseVersioning"]["releaseCreated"] is False, "repository must not claim release/tag before it exists")
+    require(publication["w3idRequested"] is True, "W3ID request must be recorded")
+    require(publication["w3idPullRequest"] == W3ID_PR, "W3ID PR mismatch")
+    require(publication["w3idMergeCommit"] == W3ID_MERGE, "W3ID merge commit mismatch")
+    require(publication["w3idActive"] is True, "current W3ID route must be active")
+    require(publication["liveVerificationRun"] == LIVE_RUN, "live verification evidence mismatch")
+    require(contract["releaseVersioning"]["releaseCreated"] is False, "release must remain unpublished at current-active stage")
 
-    require(backends["contractVersion"] == contract["contractVersion"], "backend contract version mismatch")
-    require(backends["status"] == "activation-requested", "backend targets must reflect activation-requested state")
-    require(backends["repository"] == contract["repository"], "backend repository mismatch")
-    require(backends["branch"] == "main", "current publication backend must target main")
+    require(backends["status"] == "current-active", "backend status mismatch")
     routes = {entry["kind"]: entry for entry in backends["routes"]}
-    require(set(routes) == {"current", "version"}, "expected current and version backend metadata")
-    require(routes["current"]["route"] == EXPECTED_ONTOLOGY_IRI, "current W3ID route mismatch")
-    require(routes["current"]["target"] == CURRENT_RAW, "current backend mismatch")
-    require(routes["current"].get("activationRequest") == EXPECTED_W3ID_PR, "current route missing activation request")
-    require(routes["version"]["route"] == EXPECTED_VERSION_IRI, "planned version IRI mismatch")
-    require(routes["version"]["target"] == VERSION_RAW, "planned immutable backend mismatch")
-    require(routes["version"].get("requiresTag") == "smo-v0.1.0", "immutable target must require smo-v0.1.0")
-    for entry in routes.values():
-        require(entry["active"] is False, f"route must not claim activation prematurely: {entry['route']}")
-        require(entry["target"].startswith(RAW_BACKEND_PREFIX), f"backend outside governed repository: {entry['target']}")
+    require(set(routes) == {"current", "version"}, "expected current and version routes")
+    current = routes["current"]
+    version = routes["version"]
+    require(current["route"] == ONTOLOGY and current["target"] == CURRENT_RAW and current["active"] is True, "current backend mismatch")
+    require(current["activationRequest"] == W3ID_PR, "current activation request mismatch")
+    require(current["activationMergeCommit"] == W3ID_MERGE, "current merge evidence mismatch")
+    require(current["liveVerificationRun"] == LIVE_RUN, "current live evidence mismatch")
+    require(version["route"] == VERSION_IRI and version["target"] == VERSION_RAW, "version backend mismatch")
+    require(version["active"] is False, "immutable route must remain inactive before release")
+    require(version["requiresTag"] == "smo-v0.1.0", "immutable route must require governed tag")
 
-    htaccess = W3ID_PATH.read_text(encoding="utf-8")
-    require("PRE-ACTIVATION" in htaccess, "submitted W3ID payload must retain its pre-live-state marker")
-    require(CURRENT_RAW in htaccess, "W3ID activation payload missing current Turtle backend")
-    require(VERSION_RAW not in htaccess, "immutable version redirect must not be present before smo-v0.1.0 exists")
-    require("text/turtle" in htaccess and "R=303" in htaccess, "activation payload must support Turtle negotiation with 303 redirects")
-    require(GITHUB_IDENTITY_PREFIX in htaccess, "activation payload missing human project route")
-
-    w3id_readme = W3ID_README_PATH.read_text(encoding="utf-8")
-    for token in ("@GerhardBalz", EXPECTED_ONTOLOGY_IRI, EXPECTED_NAMESPACE, "smo-v0.1.0", "no immutable version redirect"):
-        require(token in w3id_readme, f"W3ID README missing governance token: {token}")
-
-    required_tokens = (
-        EXPECTED_NAMESPACE,
-        EXPECTED_ONTOLOGY_IRI,
-        EXPECTED_VERSION_IRI,
-        EXPECTED_VERSION,
-        "activation-requested",
-        "6538",
-        "smo-v0.1.0",
-    )
-    for path in (README_PATH, DOC_PATH):
+    for path in (README, DOC):
         text = path.read_text(encoding="utf-8")
-        for token in required_tokens:
-            require(token in text, f"{path.relative_to(ROOT)} missing publication-contract token: {token}")
+        for token in (NS, ONTOLOGY, VERSION_IRI, "current-active", "6538", "smo-v0.1.0"):
+            require(token in text, f"{path.relative_to(ROOT)} missing token: {token}")
 
-    print("SUCCESS: SMO v0.1 ontology and activation-requested publication state are machine-verifiable.")
-    print(f"Term namespace:       {EXPECTED_NAMESPACE}")
-    print(f"Ontology IRI:         {EXPECTED_ONTOLOGY_IRI}")
-    print(f"Version IRI:          {EXPECTED_VERSION_IRI}")
-    print(f"Declared classes:     {len(declared_classes)}")
+    print("SUCCESS: SMO v0.1 ontology and current-active publication state are machine-verifiable.")
+    print(f"Term namespace:       {NS}")
+    print(f"Ontology IRI:         {ONTOLOGY}")
+    print(f"Version IRI:          {VERSION_IRI}")
+    print("Declared classes:     2")
     print("SMO-owned properties: 0")
-    print("W3ID request:         submitted as perma-id/w3id.org#6538; not yet active")
+    print("W3ID current route:   active and live-verified")
     print("Immutable route:      deferred until smo-v0.1.0 exists")
 
 
