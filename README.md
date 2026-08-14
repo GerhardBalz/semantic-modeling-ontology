@@ -102,11 +102,13 @@ The governed verifier proves that:
 
 The live resolver verifier is `publication/verify-live-w3id.py`. It follows only internal `w3id.org` canonicalization hops, verifies terminal governed redirect targets, and fetches RDF backends separately for semantic evidence.
 
-## Publication and versioning
+## Publication and governance
 
 See [`docs/namespace-publication-versioning.md`](docs/namespace-publication-versioning.md) for the machine-aligned namespace, backend, state-machine, versioning, and acceptance contract.
 
-The publication gate for durable downstream references is now satisfied. The next governed activity is SMO #11: evaluate downstream SMO alignment in ESKA and Pizza without modifying immutable `smo-v0.1.0`, immutable `eska-v0.1.0`, or historical Pizza semantics merely for symmetry.
+The publication gate for durable downstream references is satisfied. The downstream alignment and cross-domain evidence cycle is also complete: governed SMO v0.1 is used by the ESKA and semantic-modeling reference examples, and SMO #22 / PR #23 concluded that competency questions should reuse MOD `mod:competencyQuestion` rather than introduce new SMO vocabulary.
+
+There are currently no open SMO issues. Future vocabulary changes require distinct reusable semantic-modeling evidence, standards-first review, and must not modify immutable `smo-v0.1.0` merely for symmetry with downstream examples.
 
 ## License
 
